@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>班级事务管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Microsoft YaHei',Arial,sans-serif;background:#f0f2f5;color:#222;font-size:14px;min-height:100vh}
+:root{--blue:#1677ff;--green:#52c41a;--red:#ff4d4f;--orange:#fa8c16;--border:#e8e8e8;--radius:8px}
+
+/* 登录页 */
+#login-page{min-height:100vh;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border-radius:16px;padding:32px 28px;width:100%;max-width:400px;box-shadow:0 20px 60px #0003}
+.login-box h2{text-align:center;margin-bottom:6px;font-size:22px}
+.login-subtitle{text-align:center;color:#888;font-size:13px;margin-bottom:24px}
+.login-tabs{display:flex;margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.login-tab{flex:1;padding:10px;text-align:center;cursor:pointer;font-size:13px;background:#fafafa;border:none;font-family:inherit;transition:.2s}
+.login-tab.active{background:var(--blue);color:#fff}
+
+/* 主布局 */
+#app{display:none;min-height:100vh;flex-direction:column}
+#topbar{background:#001529;color:#fff;padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+#topbar .logo{font-size:15px;font-weight:bold;display:flex;align-items:center;gap:10px}
+#topbar .user-info{display:flex;align-items:center;gap:8px;font-size:12px}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;flex-shrink:0}
+
+/* 底部导航（手机） */
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#001529;display:flex;z-index:100;border-top:1px solid #ffffff20}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;cursor:pointer;color:#ffffff70;font-size:10px;gap:3px;border:none;background:none;font-family:inherit;transition:.2s}
+.bnav-item.active{color:#40a9ff}
+.bnav-icon{font-size:20px;line-height:1}
+.bnav-more{position:relative}
+
+/* 侧边更多菜单 */
+#more-menu{position:fixed;bottom:60px;right:0;background:#001529;border-radius:12px 0 0 0;z-index:200;display:none;flex-direction:column;min-width:160px;border:1px solid #ffffff20;border-right:none;border-bottom:none}
+#more-menu.show{display:flex}
+.more-item{padding:13px 20px;color:#ffffffb0;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid #ffffff10}
+.more-item:last-child{border-bottom:none}
+.more-item.active{color:#40a9ff}
+#more-overlay{position:fixed;inset:0;z-index:199;display:none}
+#more-overlay.show{display:block}
+
+/* 内容区 */
+#content{flex:1;padding:16px;padding-bottom:80px;overflow-y:auto}
+
+/* 通用组件 */
+.card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:14px}
+.card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:14px;text-align:center}
+.stat-num{font-size:26px;font-weight:700;color:var(--blue)}
+.stat-label{font-size:11px;color:#888;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:13px;background:#fff;transition:.2s;font-family:inherit;white-space:nowrap;-webkit-appearance:none}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-block{width:100%;justify-content:center;padding:12px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;margin-bottom:6px;font-size:13px;font-weight:500;color:#333}
+.form-control{width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:16px;outline:none;transition:.2s;font-family:inherit;-webkit-appearance:none;appearance:none}
+.form-control:focus{border-color:var(--blue);box-shadow:0 0 0 2px #1677ff20}
+textarea.form-control{resize:vertical;min-height:80px;font-size:14px}
+.badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:500}
+.badge-blue{background:#e6f4ff;color:#1677ff}
+.badge-green{background:#f6ffed;color:#389e0d}
+.badge-red{background:#fff2f0;color:#cf1322}
+.badge-orange{background:#fff7e6;color:#d46b08}
+.badge-gray{background:#f5f5f5;color:#595959}
+.alert{padding:10px 14px;border-radius:6px;margin-bottom:12px;font-size:13px;line-height:1.5}
+.alert-error{background:#fff2f0;border:1px solid #ffccc7;color:#cf1322}
+.alert-info{background:#e6f4ff;border:1px solid #91caff;color:#0958d9}
+.alert-success{background:#f6ffed;border:1px solid #b7eb8f;color:#389e0d}
+.progress{height:8px;background:#f0f0f0;border-radius:100px;overflow:hidden}
+.progress-bar{height:100%;background:var(--blue);border-radius:100px;transition:.3s}
+.task-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.task-name{font-weight:500;font-size:14px;margin-bottom:6px}
+.task-meta{font-size:12px;color:#888;display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}
+.notice-item{padding:14px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;cursor:pointer}
+.notice-item.unread{border-left:3px solid var(--blue)}
+.notice-title{font-weight:500;margin-bottom:4px}
+.notice-meta{font-size:12px;color:#888}
+.empty{text-align:center;padding:40px 20px;color:#bbb}
+.empty-icon{font-size:40px;margin-bottom:10px}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#fafafa;padding:10px 10px;text-align:left;border-bottom:2px solid var(--border);font-weight:600;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab{padding:10px 16px;cursor:pointer;font-size:13px;border-bottom:2px solid transparent;margin-bottom:-2px;color:#888;white-space:nowrap}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+.notif-dot{width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;margin-left:2px;vertical-align:top;margin-top:2px}
+
+/* 模态框 */
+.modal-overlay{position:fixed;inset:0;background:#00000070;display:flex;align-items:flex-end;justify-content:center;z-index:500;padding:0}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
+.modal-header h3{font-size:16px;font-weight:600}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:#fff}
+.close-btn{background:none;border:none;font-size:22px;cursor:pointer;color:#888;padding:4px;line-height:1}
+
+/* 搜索栏 */
+.search-bar{margin-bottom:14px}
+.search-bar .form-control{font-size:14px}
+
+/* 页面标题 */
+.page-header{font-size:17px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div id="login-page">
+  <div class="login-box">
+    <h2>📚 班级事务管理</h2>
+    <p class="login-subtitle">支持手机、电脑登录使用</p>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchTab('member')">普通成员</button>
+      <button class="login-tab" onclick="switchTab('admin')">管理者（班长）</button>
+    </div>
+    <div id="login-err" class="alert alert-error" style="display:none"></div>
+    <div class="form-group">
+      <label class="form-label" id="id-label">学号</label>
+      <input class="form-control" id="login-id" placeholder="请输入学号" autocomplete="off" inputmode="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">密码</label>
+      <input class="form-control" id="login-pwd" type="password" placeholder="默认密码：学号后6位">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">登 录</button>
+    <p style="text-align:center;margin-top:14px;font-size:12px;color:#aaa">忘记密码请联系班长重置</p>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f0f0f0;text-align:center">
+      <p style="font-size:12px;color:#888;margin-bottom:8px">演示账号</p>
+      <p style="font-size:12px;color:#aaa">管理者：admin / admin123</p>
+      <p style="font-size:12px;color:#aaa">成员：20230001 / 230001</p>
+    </div>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="app">
+  <div id="topbar">
+    <div class="logo">
+      <span>📚</span>
+      <span id="class-name-top">班级管理</span>
+    </div>
+    <div class="user-info">
+      <div id="notif-area" style="cursor:pointer;margin-right:4px" onclick="navigate('tasks')">
+        🔔<span id="notif-dot" class="notif-dot" style="display:none"></span>
+      </div>
+      <div class="avatar" id="user-avatar">?</div>
+      <span id="user-name-top" style="max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button class="btn btn-sm" style="color:#fff;border-color:#ffffff40;background:transparent;padding:5px 8px" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+
+  <div id="content"></div>
+
+  <!-- 底部导航 -->
+  <div id="bottom-nav">
+    <button class="bnav-item active" onclick="navigate('home')" data-page="home"><span class="bnav-icon">🏠</span>首页</button>
+    <button class="bnav-item" onclick="navigate('tasks')" data-page="tasks"><span class="bnav-icon">📋</span>任务</button>
+    <button class="bnav-item" onclick="navigate('notice')" data-page="notice"><span class="bnav-icon">📢</span>通知</button>
+    <button class="bnav-item" onclick="navigate('profile')" data-page="profile"><span class="bnav-icon">👤</span>我的</button>
+    <button class="bnav-item bnav-more" onclick="toggleMore()"><span class="bnav-icon">⋯</span>更多</button>
+  </div>
+
+  <!-- 更多菜单 -->
+  <div id="more-overlay" onclick="closeMore()"></div>
+  <div id="more-menu">
+    <div class="more-item" onclick="navigate('screenshot');closeMore()" data-page="screenshot">🖼️ 截图收集</div>
+    <div class="more-item" onclick="navigate('reply');closeMore()" data-page="reply">✅ 收到回复</div>
+    <div class="more-item" onclick="navigate('lottery');closeMore()" data-page="lottery">🎲 抽签功能</div>
+    <div class="more-item" onclick="navigate('leave');closeMore()" data-page="leave">📝 请假登记</div>
+    <div class="more-item" onclick="navigate('homework');closeMore()" data-page="homework">📖 作业任务</div>
+    <div class="more-item admin-only" onclick="navigate('members');closeMore()" data-page="members">👥 成员管理</div>
+    <div class="more-item admin-only" onclick="navigate('stats');closeMore()" data-page="stats">📊 数据统计</div>
+    <div class="more-item" onclick="navigate('history');closeMore()" data-page="history">🕐 历史记录</div>
+  </div>
+</div>
+
+<div id="modal-container"></div>
+
+<script>
+// ===== 数据层 =====
+const DB={
+  get(k){try{return JSON.parse(localStorage.getItem('cmgr_'+k))||null}catch{return null}},
+  set(k,v){localStorage.setItem('cmgr_'+k,JSON.stringify(v))}
+};
+
+function initData(){
+  if(!DB.get('users')){
+    DB.set('users',[
+      {id:'admin',name:'班长',role:'admin',pwd:'admin123',status:'active',remark:'班长'},
+      {id:'20230001',name:'张三',role:'member',pwd:'230001',status:'active',remark:''},
+      {id:'20230002',name:'李四',role:'member',pwd:'230002',status:'active',remark:''},
+      {id:'20230003',name:'王五',role:'member',pwd:'230003',status:'active',remark:''},
+      {id:'20230004',name:'赵六',role:'member',pwd:'230004',status:'active',remark:''},
+    ]);
+  }
+  ['screenshots','replies','lotteries','leaves','homeworks','logs'].forEach(k=>{if(!DB.get(k))DB.set(k,[]);});
+  if(!DB.get('notices'))DB.set('notices',[{id:'n1',title:'欢迎使用班级管理系统',content:'同学们好！本系统支持手机和电脑使用，请及时查收各类通知和任务。',date:Date.now(),reads:[]}]);
+  if(!DB.get('settings'))DB.set('settings',{className:'我的班级'});
+  if(!DB.get('loginAttempts'))DB.set('loginAttempts',{});
+}
+
+// ===== 认证 =====
+let currentUser=null, loginRole='member';
+
+function switchTab(role){
+  loginRole=role;
+  document.querySelectorAll('.login-tab').forEach((t,i)=>t.classList.toggle('active',(role==='member'&&i===0)||(role==='admin'&&i===1)));
+  document.getElementById('id-label').textContent=role==='admin'?'管理员账号':'学号';
+  document.getElementById('login-id').placeholder=role==='admin'?'请输入管理员账号':'请输入学号';
+  document.getElementById('login-pwd').placeholder=role==='admin'?'请输入密码':'默认密码：学号后6位';
+}
+
+function doLogin(){
+  const id=document.getElementById('login-id').value.trim();
+  const pwd=document.getElementById('login-pwd').value.trim();
+  if(!id||!pwd){showErr('请填写账号和密码');return;}
+
+  const attempts=DB.get('loginAttempts')||{};
+  const att=attempts[id]||{count:0,lockUntil:0};
+  if(Date.now()<att.lockUntil){showErr(`账号已锁定，请${Math.ceil((att.lockUntil-Date.now())/60000)}分钟后重试`);return;}
+
+  const users=DB.get('users')||[];
+  const targetRole=loginRole==='admin'?'admin':'member';
+  const user=users.find(u=>u.id===id&&u.pwd===pwd&&u.role===targetRole);
+
+  if(!user){
+    att.count=(att.count||0)+1;
+    if(att.count>=5){att.lockUntil=Date.now()+600000;att.count=0;showErr('失败次数过多，锁定10分钟');}
+    else showErr(`账号或密码错误（还可尝试${5-att.count}次）`);
+    attempts[id]=att;DB.set('loginAttempts',attempts);return;
+  }
+  if(user.status==='disabled'){showErr('账号已被禁用，请联系班长');return;}
+  delete attempts[id];DB.set('loginAttempts',attempts);
+  currentUser=user;addLog('登录','系统登录');startApp();
+}
+
+function showErr(msg){
+  const el=document.getElementById('login-err');
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>el.style.display='none',4000);
+}
+
+function doLogout(){
+  if(!confirm('确认退出登录？'))return;
+  addLog('登出','退出登录');currentUser=null;
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-id').value='';
+  document.getElementById('login-pwd').value='';
+}
+
+function startApp(){
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('app').style.flexDirection='column';
+  const s=DB.get('settings')||{};
+  document.getElementById('class-name-top').textContent=s.className||'班级管理';
+  document.getElementById('user-name-top').textContent=currentUser.name;
+  document.getElementById('user-avatar').textContent=currentUser.name.slice(-1);
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=isAdmin()?'':'none');
+  updateNotifBadge();navigate('home');
+}
+
+function isAdmin(){return currentUser?.role==='admin';}
+
+// ===== 导航 =====
+function navigate(page){
+  // 更新底部导航
+  document.querySelectorAll('.bnav-item[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  // 更新更多菜单
+  document.querySelectorAll('.more-item[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  document.getElementById('content').innerHTML='<div style="text-align:center;padding:40px;color:#aaa">加载中...</div>';
+  setTimeout(()=>{
+    ({home:renderHome,tasks:renderTasks,screenshot:renderScreenshot,reply:renderReply,
+      lottery:renderLottery,leave:renderLeave,notice:renderNotice,homework:renderHomework,
+      members:renderMembers,stats:renderStats,history:renderHistory,profile:renderProfile})[page]?.();
+  },10);
+}
+
+function toggleMore(){
+  document.getElementById('more-menu').classList.toggle('show');
+  document.getElementById('more-overlay').classList.toggle('show');
+}
+function closeMore(){
+  document.getElementById('more-menu').classList.remove('show');
+  document.getElementById('more-overlay').classList.remove('show');
+}
+
+// ===== 工具函数 =====
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function fmtDate(ts){if(!ts)return'-';const d=new Date(ts);return`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+function fmtDateFull(ts){if(!ts)return'-';const d=new Date(ts);return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+function pad(n){return String(n).padStart(2,'0');}
+function addLog(action,detail){
+  const logs=DB.get('logs')||[];
+  logs.unshift({id:uid(),user:currentUser.id,userName:currentUser.name,action,detail,time:Date.now()});
+  if(logs.length>500)logs.splice(500);DB.set('logs',logs);
+}
+function getMembers(){return(DB.get('users')||[]).filter(u=>u.role==='member'&&u.status!=='disabled');}
+function getAllMembers(){return(DB.get('users')||[]).filter(u=>u.role==='member');}
+function showModal(html){
+  document.getElementById('modal-container').innerHTML=`<div class="modal-overlay" onclick="closeModalOverlay(event)">${html}</div>`;
+  document.body.style.overflow='hidden';
+}
+function closeModal(){document.getElementById('modal-container').innerHTML='';document.body.style.overflow='';}
+function closeModalOverlay(e){if(e.target.classList.contains('modal-overlay'))closeModal();}
+function updateNotifBadge(){
+  if(!currentUser)return;
+  const id=currentUser.id;let c=0;
+  (DB.get('screenshots')||[]).forEach(t=>{if(Date.now()<t.deadline&&!t.submissions?.find(s=>s.uid===id))c++;});
+  (DB.get('replies')||[]).forEach(t=>{if(Date.now()<t.deadline&&!t.replies?.find(r=>r.uid===id))c++;});
+  (DB.get('homeworks')||[]).forEach(t=>{if(Date.now()<t.deadline&&!t.submissions?.find(s=>s.uid===id))c++;});
+  document.getElementById('notif-dot').style.display=c>0?'inline-block':'none';
+}
+function deleteTask(store,id,cb){
+  if(!confirm('确认删除？删除后不可恢复。'))return;
+  DB.set(store,(DB.get(store)||[]).filter(t=>t.id!==id));
+  addLog('删除任务',store);closeModal();eval(cb+'()');
+}
+
+// ===== 首页 =====
+function renderHome(){
+  const members=getAllMembers(),uid=currentUser.id;
+  const scs=DB.get('screenshots')||[],rps=DB.get('replies')||[],hws=DB.get('homeworks')||[],leaves=DB.get('leaves')||[];
+  const activeScs=scs.filter(t=>Date.now()<t.deadline),activeRps=rps.filter(t=>Date.now()<t.deadline),activeHws=hws.filter(t=>Date.now()<t.deadline);
+  let pending=[];
+  activeScs.forEach(t=>{if(!t.submissions?.find(s=>s.uid===uid))pending.push({name:t.name,type:'截图收集',deadline:t.deadline,page:'screenshot'});});
+  activeRps.forEach(t=>{if(!t.replies?.find(r=>r.uid===uid))pending.push({name:t.title,type:'收到回复',deadline:t.deadline,page:'reply'});});
+  activeHws.forEach(t=>{if(!t.submissions?.find(s=>s.uid===uid))pending.push({name:t.name,type:'作业任务',deadline:t.deadline,page:'homework'});});
+  const notices=DB.get('notices')||[];
+  const pendingLeaves=leaves.filter(l=>l.status==='pending');
+  document.getElementById('content').innerHTML=`
+  <div style="padding-bottom:4px">
+    <div style="font-size:18px;font-weight:600;margin-bottom:14px">你好，${currentUser.name} 👋</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">${members.length}</div><div class="stat-label">班级成员</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--orange)">${pending.length}</div><div class="stat-label">我的待完成</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--green)">${activeScs.length+activeRps.length+activeHws.length}</div><div class="stat-label">进行中任务</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--red)">${pendingLeaves.length}</div><div class="stat-label">${isAdmin()?'待审批请假':'我的请假'}</div></div>
+    </div>
+
+    ${pending.length>0?`<div class="card">
+      <div class="card-title">⏰ 待完成任务（${pending.length}项）</div>
+      ${pending.slice(0,5).map(t=>`<div class="task-card" onclick="navigate('${t.page}')">
+        <div class="task-name">${t.name}</div>
+        <div class="task-meta"><span class="badge badge-blue">${t.type}</span><span>截止：${fmtDate(t.deadline)}</span></div>
+      </div>`).join('')}
+    </div>`:'<div class="card"><div style="text-align:center;padding:10px;color:var(--green);font-size:14px">✅ 暂无待完成任务，继续保持！</div></div>'}
+
+    <div class="card">
+      <div class="card-title">📢 最新通知</div>
+      ${notices.length===0?'<div class="empty"><p>暂无通知</p></div>':
+        notices.slice(0,3).map(n=>`<div class="notice-item ${!n.reads?.includes(uid)?'unread':''}" onclick="navigate('notice')">
+          <div class="notice-title">${!n.reads?.includes(uid)?'🔵 ':''}${n.title}</div>
+          <div class="notice-meta">${fmtDate(n.date)}</div>
+        </div>`).join('')}
+    </div>
+
+    ${isAdmin()&&pendingLeaves.length>0?`<div class="card">
+      <div class="alert alert-info" style="margin:0">📝 有 <b>${pendingLeaves.length}</b> 条请假申请待审批
+        <button class="btn btn-sm btn-primary" style="margin-left:8px" onclick="navigate('leave')">去处理</button>
+      </div>
+    </div>`:''}
+
+    <div class="card">
+      <div class="card-title">🚀 快捷入口</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${[['🖼️','截图收集','screenshot'],['✅','收到回复','reply'],['🎲','抽签','lottery'],['📝','请假','leave'],['📖','作业','homework'],['📢','通知','notice']].map(([icon,name,page])=>`
+        <div onclick="navigate('${page}')" style="text-align:center;padding:14px 8px;background:#f8f9ff;border-radius:8px;cursor:pointer;border:1px solid #e8eeff">
+          <div style="font-size:24px;margin-bottom:4px">${icon}</div>
+          <div style="font-size:12px;color:#555">${name}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== 任务中心 =====
+function renderTasks(){
+  const uid=currentUser.id,members=getMembers();
+  const all=[
+    ...(DB.get('screenshots')||[]).map(t=>({...t,_type:'截图收集',_key:'submissions',_page:'screenshot'})),
+    ...(DB.get('replies')||[]).map(t=>({...t,name:t.title,_type:'收到回复',_key:'replies',_page:'reply'})),
+    ...(DB.get('homeworks')||[]).map(t=>({...t,_type:'作业任务',_key:'submissions',_page:'homework'})),
+  ].sort((a,b)=>b.deadline-a.deadline);
+  function stLabel(t){if(Date.now()>t.deadline)return{l:'已截止',c:'badge-gray'};return{l:'进行中',c:'badge-green'};}
+  function myS(t){return(t[t._key]||[]).find(x=>x.uid===uid)?'已完成':'未完成';}
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">📋 任务中心</div>
+    ${all.length===0?'<div class="empty"><div class="empty-icon">📭</div><p>暂无任务</p></div>':
+    all.map(t=>{const st=stLabel(t);const done=(t[t._key]||[]).length;const ms=myS(t);
+      return`<div class="task-card" onclick="navigate('${t._page}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="task-name" style="flex:1">${t.name}</div>
+          <span class="badge ${st.c}">${st.l}</span>
+        </div>
+        <div class="task-meta">
+          <span class="badge badge-blue">${t._type}</span>
+          <span>截止：${fmtDate(t.deadline)}</span>
+          ${isAdmin()?`<span>${done}/${members.length}人完成</span>`:`<span class="badge ${ms.includes('未')?'badge-orange':'badge-green'}">${ms}</span>`}
+        </div>
+      </div>`;}).join('')}
+  </div>`;
+}
+
+// ===== 截图收集 =====
+function renderScreenshot(){
+  const tasks=DB.get('screenshots')||[],uid=currentUser.id;
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">🖼️ 截图收集
+      ${isAdmin()?`<button class="btn btn-primary btn-sm" onclick="openCreateScreenshot()">+ 新建</button>`:''}
+    </div>
+    ${tasks.length===0?'<div class="empty"><div class="empty-icon">🖼️</div><p>暂无截图收集任务</p></div>':''}
+    ${tasks.map(t=>{
+      const done=t.submissions?.length||0,total=getMembers().length,pct=total>0?Math.round(done/total*100):0;
+      const expired=Date.now()>t.deadline,myDone=t.submissions?.find(s=>s.uid===uid);
+      return`<div class="task-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="task-name" style="flex:1">${t.name}</div>
+          <span class="badge ${expired?'badge-gray':'badge-green'}">${expired?'已截止':'进行中'}</span>
+        </div>
+        <div class="task-meta"><span>截止：${fmtDate(t.deadline)}</span>${t.remark?`<span>${t.remark}</span>`:''}</div>
+        ${isAdmin()?`<div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px"><span>完成进度</span><span>${done}/${total}人 (${pct}%)</span></div>
+          <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-sm" onclick="viewScreenshotDetail('${t.id}')">查看详情</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTask('screenshots','${t.id}','renderScreenshot')">删除</button>
+          </div>
+        </div>`:`<div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+          <span class="badge ${myDone?'badge-green':'badge-orange'}">${myDone?'✓ 已上传':'未上传'}</span>
+          ${!myDone&&!expired?`<button class="btn btn-primary btn-sm" onclick="uploadScreenshot('${t.id}')">上传截图</button>`:''}
+          ${myDone?`<button class="btn btn-sm" onclick="viewMyScreenshot('${t.id}')">查看已传</button>`:''}
+        </div>`}
+      </div>`;}).join('')}
+  </div>`;
+}
+
+function openCreateScreenshot(){
+  const t=new Date(Date.now()+86400000).toISOString().slice(0,16);
+  showModal(`<div class="modal"><div class="modal-header"><h3>新建截图收集</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">任务名称 *</label><input class="form-control" id="sc-name" placeholder="如：第3周作业截图"></div>
+      <div class="form-group"><label class="form-label">截止时间 *</label><input class="form-control" id="sc-deadline" type="datetime-local" value="${t}"></div>
+      <div class="form-group"><label class="form-label">截图要求（可选）</label><textarea class="form-control" id="sc-remark" placeholder="如：需清晰显示姓名和学号"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createScreenshot()">创建</button></div>
+  </div>`);
+}
+function createScreenshot(){
+  const name=document.getElementById('sc-name').value.trim();
+  const deadline=new Date(document.getElementById('sc-deadline').value).getTime();
+  const remark=document.getElementById('sc-remark').value.trim();
+  if(!name){alert('请填写任务名称');return;}if(!deadline||isNaN(deadline)){alert('请选择截止时间');return;}
+  const tasks=DB.get('screenshots')||[];
+  tasks.unshift({id:uid(),name,deadline,remark,createdAt:Date.now(),createdBy:currentUser.id,submissions:[]});
+  DB.set('screenshots',tasks);addLog('创建截图任务',name);closeModal();renderScreenshot();
+}
+function uploadScreenshot(taskId){
+  showModal(`<div class="modal"><div class="modal-header"><h3>上传截图</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="alert alert-info">支持JPG、PNG，单张不超过5MB，可多张</div>
+      <div class="form-group"><label class="form-label">选择截图</label>
+        <input type="file" id="sc-files" accept="image/*" multiple style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px">
+      </div>
+      <div id="sc-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doUploadScreenshot('${taskId}')">确认上传</button></div>
+  </div>`);
+  document.getElementById('sc-files').addEventListener('change',function(){
+    const p=document.getElementById('sc-preview');p.innerHTML='';
+    Array.from(this.files).slice(0,6).forEach(f=>{const r=new FileReader();r.onload=e=>{const img=document.createElement('img');img.src=e.target.result;img.style.cssText='width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e8e8e8';p.appendChild(img);};r.readAsDataURL(f);});
+  });
+}
+function doUploadScreenshot(taskId){
+  const files=document.getElementById('sc-files').files;
+  if(!files.length){alert('请选择截图文件');return;}
+  const tasks=DB.get('screenshots')||[],task=tasks.find(t=>t.id===taskId);if(!task)return;
+  const images=[];let done=0,total=files.length;
+  Array.from(files).forEach(f=>{
+    if(f.size>5*1024*1024){alert(`${f.name} 超过5MB限制`);total--;return;}
+    const r=new FileReader();r.onload=e=>{images.push({name:f.name,data:e.target.result});done++;
+      if(done===total){
+        if(!task.submissions)task.submissions=[];
+        task.submissions=task.submissions.filter(s=>s.uid!==currentUser.id);
+        task.submissions.push({uid:currentUser.id,name:currentUser.name,time:Date.now(),images});
+        DB.set('screenshots',tasks);addLog('上传截图',task.name);closeModal();renderScreenshot();updateNotifBadge();alert('上传成功！');
+      }};r.readAsDataURL(f);
+  });
+}
+function viewMyScreenshot(taskId){
+  const task=(DB.get('screenshots')||[]).find(t=>t.id===taskId);
+  const sub=task?.submissions?.find(s=>s.uid===currentUser.id);if(!sub)return;
+  showModal(`<div class="modal"><div class="modal-header"><h3>我的截图</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body"><p style="color:#888;font-size:13px;margin-bottom:12px">上传于 ${fmtDateFull(sub.time)}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${sub.images.map(img=>`<img src="${img.data}" style="width:100px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e8e8e8;cursor:pointer" onclick="window.open(this.src)">`).join('')}</div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">关闭</button><button class="btn btn-primary" onclick="closeModal();uploadScreenshot('${taskId}')">重新上传</button></div>
+  </div>`);
+}
+function viewScreenshotDetail(taskId){
+  const task=(DB.get('screenshots')||[]).find(t=>t.id===taskId);if(!task)return;
+  const members=getMembers(),subs=task.submissions||[],notDone=members.filter(m=>!subs.find(s=>s.uid===m.id));
+  showModal(`<div class="modal"><div class="modal-header"><h3>${task.name}</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="stat-card"><div class="stat-num" style="color:var(--green)">${subs.length}</div><div class="stat-label">已完成</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--red)">${notDone.length}</div><div class="stat-label">未完成</div></div>
+      </div>
+      ${notDone.length>0?`<div class="alert alert-error">未完成：${notDone.map(m=>m.name).join('、')}</div>`:''}
+      <div class="tabs" id="sc-tabs">
+        <div class="tab active" onclick="scTab('uploads',this)">已上传(${subs.length})</div>
+        <div class="tab" onclick="scTab('missing',this)">未完成(${notDone.length})</div>
+      </div>
+      <div id="sc-tab-uploads">
+        ${subs.map(s=>`<div style="border:1px solid #e8e8e8;border-radius:8px;padding:12px;margin-bottom:8px">
+          <div style="font-weight:500;margin-bottom:8px;font-size:13px">${s.name}(${s.uid}) · ${fmtDate(s.time)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${s.images.map(img=>`<img src="${img.data}" style="width:72px;height:72px;object-fit:cover;border-radius:4px;cursor:pointer" onclick="window.open(this.src)">`).join('')}</div>
+        </div>`).join('')||'<p style="color:#aaa;text-align:center">暂无上传</p>'}
+      </div>
+      <div id="sc-tab-missing" style="display:none">
+        ${notDone.map(m=>`<div style="padding:10px 0;border-bottom:1px solid #f0f0f0">${m.name}（${m.id}）</div>`).join('')||'<p style="color:var(--green);text-align:center">全部已完成 🎉</p>'}
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">关闭</button></div>
+  </div>`);
+}
+function scTab(t,el){
+  document.querySelectorAll('#sc-tab-uploads,#sc-tab-missing').forEach(x=>x.style.display='none');
+  document.getElementById('sc-tab-'+t).style.display='block';
+  el.closest('.tabs').querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');
+}
+
+// ===== 收到回复 =====
+function renderReply(){
+  const tasks=DB.get('replies')||[],uid=currentUser.id;
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">✅ 收到回复
+      ${isAdmin()?`<button class="btn btn-primary btn-sm" onclick="openCreateReply()">+ 新建</button>`:''}
+    </div>
+    ${tasks.length===0?'<div class="empty"><div class="empty-icon">✉️</div><p>暂无收到回复任务</p></div>':''}
+    ${tasks.map(t=>{
+      const done=t.replies?.length||0,total=getMembers().length,expired=Date.now()>t.deadline,myDone=t.replies?.find(r=>r.uid===uid);
+      return`<div class="task-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="task-name" style="flex:1">${t.title}</div>
+          <span class="badge ${expired?'badge-gray':'badge-green'}">${expired?'已截止':'进行中'}</span>
+        </div>
+        <div style="background:#f8f8f8;border-radius:6px;padding:10px;margin:8px 0;font-size:13px;color:#555;line-height:1.6">${t.content}</div>
+        <div class="task-meta"><span>截止：${fmtDate(t.deadline)}</span></div>
+        ${isAdmin()?`<div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px"><span>回复进度</span><span>${done}/${total}人</span></div>
+          <div class="progress"><div class="progress-bar" style="width:${total>0?Math.round(done/total*100):0}%"></div></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-sm" onclick="viewReplyDetail('${t.id}')">查看详情</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTask('replies','${t.id}','renderReply')">删除</button>
+          </div>
+        </div>`:`<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <span class="badge ${myDone?'badge-green':'badge-orange'}">${myDone?'✓ 已回复':'未回复'}</span>
+          ${!myDone&&!expired?`<button class="btn btn-primary btn-sm" onclick="doReply('${t.id}')">回复收到</button>`:''}
+        </div>`}
+      </div>`;}).join('')}
+  </div>`;
+}
+function openCreateReply(){
+  const t=new Date(Date.now()+86400000).toISOString().slice(0,16);
+  showModal(`<div class="modal"><div class="modal-header"><h3>新建收到回复</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">通知标题 *</label><input class="form-control" id="rp-title" placeholder="如：本周作业布置通知"></div>
+      <div class="form-group"><label class="form-label">通知内容 *</label><textarea class="form-control" id="rp-content" rows="4" placeholder="详细内容..."></textarea></div>
+      <div class="form-group"><label class="form-label">截止时间 *</label><input class="form-control" id="rp-deadline" type="datetime-local" value="${t}"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createReply()">创建</button></div>
+  </div>`);
+}
+function createReply(){
+  const title=document.getElementById('rp-title').value.trim(),content=document.getElementById('rp-content').value.trim(),deadline=new Date(document.getElementById('rp-deadline').value).getTime();
+  if(!title||!content){alert('请填写标题和内容');return;}if(!deadline||isNaN(deadline)){alert('请选择截止时间');return;}
+  const tasks=DB.get('replies')||[];tasks.unshift({id:uid(),title,content,deadline,createdAt:Date.now(),createdBy:currentUser.id,replies:[]});
+  DB.set('replies',tasks);addLog('创建回复任务',title);closeModal();renderReply();
+}
+function doReply(taskId){
+  if(!confirm('确认回复"收到"？回复后不可撤销。'))return;
+  const tasks=DB.get('replies')||[],task=tasks.find(t=>t.id===taskId);if(!task)return;
+  if(!task.replies)task.replies=[];if(task.replies.find(r=>r.uid===currentUser.id)){alert('您已回复过了');return;}
+  task.replies.push({uid:currentUser.id,name:currentUser.name,time:Date.now()});
+  DB.set('replies',tasks);addLog('回复收到',task.title);renderReply();updateNotifBadge();alert('回复成功！');
+}
+function viewReplyDetail(taskId){
+  const task=(DB.get('replies')||[]).find(t=>t.id===taskId);if(!task)return;
+  const members=getMembers(),replied=task.replies||[],notReplied=members.filter(m=>!replied.find(r=>r.uid===m.id));
+  showModal(`<div class="modal"><div class="modal-header"><h3>${task.title}</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="stat-card"><div class="stat-num" style="color:var(--green)">${replied.length}</div><div class="stat-label">已回复</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--red)">${notReplied.length}</div><div class="stat-label">未回复</div></div>
+      </div>
+      ${notReplied.length>0?`<div class="alert alert-error">未回复：${notReplied.map(m=>m.name).join('、')}</div>`:''}
+      <div style="max-height:300px;overflow-y:auto">
+        ${replied.map(r=>`<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between"><span>${r.name}</span><span style="color:#888;font-size:12px">${fmtDate(r.time)}</span></div>`).join('')||'<p style="color:#aaa;text-align:center">暂无回复</p>'}
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">关闭</button></div>
+  </div>`);
+}
+
+// ===== 抽签 =====
+function renderLottery(){
+  const tasks=DB.get('lotteries')||[];
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">🎲 抽签功能
+      ${isAdmin()?`<button class="btn btn-primary btn-sm" onclick="openCreateLottery()">+ 新建</button>`:''}
+    </div>
+    ${tasks.length===0?'<div class="empty"><div class="empty-icon">🎲</div><p>暂无抽签任务</p></div>':''}
+    ${tasks.map(t=>`<div class="task-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div class="task-name" style="flex:1">${t.name}</div>
+        <span class="badge ${t.drawn?'badge-green':'badge-orange'}">${t.drawn?'已抽签':'待抽签'}</span>
+      </div>
+      <div class="task-meta"><span>${t.participants.length}人参与</span><span>${fmtDate(t.createdAt)}</span>${t.isPublic?'<span class="badge badge-blue">公开</span>':''}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-sm" onclick="viewLotteryResult('${t.id}')">查看结果</button>
+        ${isAdmin()&&!t.drawn?`<button class="btn btn-primary btn-sm" onclick="drawLottery('${t.id}')">开始抽签</button>`:''}
+        ${isAdmin()?`<button class="btn btn-sm btn-danger" onclick="deleteTask('lotteries','${t.id}','renderLottery')">删除</button>`:''}
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+function openCreateLottery(){
+  const members=getMembers();
+  showModal(`<div class="modal"><div class="modal-header"><h3>新建抽签</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">抽签主题 *</label><input class="form-control" id="lt-name" placeholder="如：班会发言顺序"></div>
+      <div class="form-group"><label class="form-label">参与成员</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px"><button class="btn btn-sm" onclick="document.querySelectorAll('.lt-cb').forEach(c=>c.checked=true)">全选</button><button class="btn btn-sm" onclick="document.querySelectorAll('.lt-cb').forEach(c=>c.checked=false)">取消全选</button></div>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:6px;padding:8px">
+          ${members.map(m=>`<label style="display:flex;align-items:center;gap:8px;padding:6px;cursor:pointer"><input type="checkbox" class="lt-cb" value="${m.id}" checked style="width:18px;height:18px"> ${m.name}（${m.id}）</label>`).join('')}
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:12px">
+        <input type="checkbox" id="lt-public" checked style="width:18px;height:18px">
+        <label class="form-label" style="margin:0">公开抽签结果（所有人可见）</label>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createLottery()">创建</button></div>
+  </div>`);
+}
+function createLottery(){
+  const name=document.getElementById('lt-name').value.trim(),isPublic=document.getElementById('lt-public').checked;
+  const selected=Array.from(document.querySelectorAll('.lt-cb:checked')).map(c=>c.value);
+  if(!name){alert('请填写抽签主题');return;}if(selected.length<2){alert('至少选择2名成员');return;}
+  const participants=getMembers().filter(m=>selected.includes(m.id)).map(m=>({uid:m.id,name:m.name}));
+  const tasks=DB.get('lotteries')||[];tasks.unshift({id:uid(),name,participants,isPublic,drawn:false,result:[],createdAt:Date.now(),createdBy:currentUser.id});
+  DB.set('lotteries',tasks);addLog('创建抽签',name);closeModal();renderLottery();
+}
+function drawLottery(taskId){
+  if(!confirm('确认开始抽签？'))return;
+  const tasks=DB.get('lotteries')||[],task=tasks.find(t=>t.id===taskId);if(!task||task.drawn)return;
+  task.result=[...task.participants].sort(()=>Math.random()-0.5).map((p,i)=>({...p,order:i+1}));
+  task.drawn=true;task.drawnAt=Date.now();DB.set('lotteries',tasks);addLog('执行抽签',task.name);renderLottery();viewLotteryResult(taskId);
+}
+function viewLotteryResult(taskId){
+  const task=(DB.get('lotteries')||[]).find(t=>t.id===taskId);if(!task)return;
+  const canView=isAdmin()||task.isPublic,myResult=task.result?.find(r=>r.uid===currentUser.id);
+  showModal(`<div class="modal"><div class="modal-header"><h3>🎲 ${task.name}</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">${!task.drawn?'<div class="empty"><p>尚未开始抽签</p></div>':canView?`
+      <p style="color:#888;font-size:13px;margin-bottom:12px">抽签时间：${fmtDateFull(task.drawnAt)}</p>
+      <div class="table-wrap"><table><tr><th>顺序</th><th>姓名</th><th>学号</th></tr>
+        ${task.result.map(r=>`<tr${r.uid===currentUser.id?' style="background:#e6f4ff"':''}><td><b>${r.order}</b></td><td>${r.name}</td><td>${r.uid}</td></tr>`).join('')}
+      </table></div>`:myResult?`<div style="text-align:center;padding:24px"><div style="font-size:48px;margin-bottom:12px">🎯</div><div style="font-size:18px">你的抽签号</div><div style="font-size:48px;font-weight:700;color:var(--blue)">${myResult.order}</div><div style="color:#888">共 ${task.result.length} 人参与</div></div>`:'<div class="empty"><p>结果未公开，请联系班长查看</p></div>'}
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">关闭</button></div>
+  </div>`);
+}
+
+// ===== 请假 =====
+function renderLeave(){
+  const leaves=DB.get('leaves')||[],uid=currentUser.id;
+  const show=isAdmin()?leaves:leaves.filter(l=>l.uid===uid);
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">📝 请假登记
+      ${!isAdmin()?`<button class="btn btn-primary btn-sm" onclick="openLeaveForm()">申请请假</button>`:''}
+    </div>
+    ${show.length===0?'<div class="empty"><div class="empty-icon">📝</div><p>暂无请假记录</p></div>':''}
+    ${show.map(l=>`<div class="task-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          ${isAdmin()?`<div style="font-weight:500;margin-bottom:4px">${l.name}（${l.uid}）</div>`:''}
+          <div style="font-size:13px;color:#555">${l.reason}</div>
+          <div class="task-meta"><span>${fmtDate(l.from)} 至 ${fmtDate(l.to)}</span></div>
+        </div>
+        <span class="badge ${l.status==='approved'?'badge-green':l.status==='rejected'?'badge-red':'badge-orange'}">${l.status==='approved'?'已批准':l.status==='rejected'?'已驳回':'待审批'}</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        ${isAdmin()&&l.status==='pending'?`<button class="btn btn-success btn-sm" onclick="approveLeave('${l.id}',true)">批准</button><button class="btn btn-danger btn-sm" onclick="approveLeave('${l.id}',false)">驳回</button>`:''}
+        <button class="btn btn-sm" onclick="viewLeaveDetail('${l.id}')">详情</button>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+function openLeaveForm(){
+  const now=new Date().toISOString().slice(0,16);
+  showModal(`<div class="modal"><div class="modal-header"><h3>申请请假</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">请假原因 *</label><textarea class="form-control" id="lv-reason" placeholder="请简要说明请假原因"></textarea></div>
+      <div class="form-group"><label class="form-label">开始时间 *</label><input class="form-control" type="datetime-local" id="lv-from" value="${now}"></div>
+      <div class="form-group"><label class="form-label">结束时间 *</label><input class="form-control" type="datetime-local" id="lv-to"></div>
+      <div class="form-group"><label class="form-label">联系方式</label><input class="form-control" id="lv-contact" placeholder="手机号或微信号"></div>
+      <div class="form-group"><label class="form-label">请假证明（可选，拍照上传）</label><input type="file" id="lv-proof" accept="image/*" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="submitLeave()">提交申请</button></div>
+  </div>`);
+}
+function submitLeave(){
+  const reason=document.getElementById('lv-reason').value.trim(),from=new Date(document.getElementById('lv-from').value).getTime(),to=new Date(document.getElementById('lv-to').value).getTime(),contact=document.getElementById('lv-contact').value.trim();
+  if(!reason||!from||!to){alert('请填写必要信息');return;}if(to<=from){alert('结束时间须晚于开始时间');return;}
+  const file=document.getElementById('lv-proof').files[0];
+  function save(proof){
+    const leaves=DB.get('leaves')||[];leaves.unshift({id:uid(),uid:currentUser.id,name:currentUser.name,reason,from,to,contact,proof:proof||null,status:'pending',appliedAt:Date.now()});
+    DB.set('leaves',leaves);addLog('申请请假',reason);closeModal();renderLeave();alert('申请已提交，等待班长审批！');
+  }
+  if(file){const r=new FileReader();r.onload=e=>save(e.target.result);r.readAsDataURL(file);}else save(null);
+}
+function approveLeave(id,approved){
+  const reason=approved?null:prompt('请输入驳回原因：');if(!approved&&reason===null)return;
+  const leaves=DB.get('leaves')||[],l=leaves.find(lv=>lv.id===id);if(!l)return;
+  l.status=approved?'approved':'rejected';l.rejectReason=reason||'';l.reviewedAt=Date.now();l.reviewedBy=currentUser.name;
+  DB.set('leaves',leaves);addLog(approved?'批准请假':'驳回请假',l.reason);renderLeave();
+}
+function viewLeaveDetail(id){
+  const l=(DB.get('leaves')||[]).find(lv=>lv.id===id);if(!l)return;
+  showModal(`<div class="modal"><div class="modal-header"><h3>请假详情</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <table style="width:100%;font-size:13px">
+        <tr><td style="color:#888;padding:8px 0;width:70px;vertical-align:top">申请人</td><td style="padding:8px 0">${l.name}（${l.uid}）</td></tr>
+        <tr><td style="color:#888;padding:8px 0;vertical-align:top">原因</td><td style="padding:8px 0">${l.reason}</td></tr>
+        <tr><td style="color:#888;padding:8px 0;vertical-align:top">时间</td><td style="padding:8px 0">${fmtDateFull(l.from)}<br>至 ${fmtDateFull(l.to)}</td></tr>
+        <tr><td style="color:#888;padding:8px 0">联系</td><td style="padding:8px 0">${l.contact||'-'}</td></tr>
+        <tr><td style="color:#888;padding:8px 0">状态</td><td style="padding:8px 0"><span class="badge ${l.status==='approved'?'badge-green':l.status==='rejected'?'badge-red':'badge-orange'}">${l.status==='approved'?'已批准':l.status==='rejected'?'已驳回':'待审批'}</span></td></tr>
+        ${l.rejectReason?`<tr><td style="color:#888;padding:8px 0;vertical-align:top">驳回原因</td><td style="padding:8px 0;color:var(--red)">${l.rejectReason}</td></tr>`:''}
+      </table>
+      ${l.proof&&isAdmin()?`<div style="margin-top:12px"><p style="color:#888;font-size:12px;margin-bottom:6px">请假证明：</p><img src="${l.proof}" style="max-width:100%;border-radius:8px"></div>`:''}
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">关闭</button></div>
+  </div>`);
+}
+
+// ===== 通知公告 =====
+function renderNotice(){
+  const notices=DB.get('notices')||[],uid=currentUser.id;
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">📢 通知公告
+      ${isAdmin()?`<button class="btn btn-primary btn-sm" onclick="openCreateNotice()">+ 发布</button>`:''}
+    </div>
+    ${notices.length===0?'<div class="empty"><div class="empty-icon">📢</div><p>暂无通知</p></div>':''}
+    ${notices.map(n=>`<div class="notice-item ${!n.reads?.includes(uid)?'unread':''}" onclick="viewNotice('${n.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div class="notice-title" style="flex:1">${!n.reads?.includes(uid)?'🔵 ':''}${n.title}</div>
+        ${isAdmin()?`<span style="font-size:12px;color:#888;white-space:nowrap">${n.reads?.length||0}人已读</span>`:''}
+      </div>
+      <div class="notice-meta">${fmtDate(n.date)}</div>
+    </div>`).join('')}
+  </div>`;
+}
+function viewNotice(id){
+  const notices=DB.get('notices')||[],n=notices.find(x=>x.id===id);if(!n)return;
+  if(!n.reads)n.reads=[];if(!n.reads.includes(currentUser.id)){n.reads.push(currentUser.id);DB.set('notices',notices);}
+  const members=getAllMembers(),unread=members.filter(m=>!n.reads.includes(m.id));
+  showModal(`<div class="modal"><div class="modal-header"><h3>${n.title}</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <p style="color:#888;font-size:12px;margin-bottom:16px">${fmtDateFull(n.date)}</p>
+      <div style="line-height:1.8;white-space:pre-wrap;font-size:14px">${n.content}</div>
+      ${isAdmin()&&unread.length>0?`<div class="alert alert-error" style="margin-top:16px">未读(${unread.length}人)：${unread.map(m=>m.name).join('、')}</div>`:''}
+    </div>
+    <div class="modal-footer">
+      ${isAdmin()?`<button class="btn btn-danger btn-sm" onclick="deleteNotice('${id}')">删除</button>`:''}
+      <button class="btn" onclick="closeModal()">关闭</button>
+    </div>
+  </div>`);
+  renderNotice();
+}
+function openCreateNotice(){
+  showModal(`<div class="modal"><div class="modal-header"><h3>发布通知公告</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">标题 *</label><input class="form-control" id="nt-title" placeholder="通知标题"></div>
+      <div class="form-group"><label class="form-label">内容 *</label><textarea class="form-control" id="nt-content" rows="6" placeholder="通知详细内容..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createNotice()">发布</button></div>
+  </div>`);
+}
+function createNotice(){
+  const title=document.getElementById('nt-title').value.trim(),content=document.getElementById('nt-content').value.trim();
+  if(!title||!content){alert('请填写标题和内容');return;}
+  const notices=DB.get('notices')||[];notices.unshift({id:uid(),title,content,date:Date.now(),reads:[currentUser.id]});
+  DB.set('notices',notices);addLog('发布通知',title);closeModal();renderNotice();
+}
+function deleteNotice(id){
+  if(!confirm('确认删除此通知？'))return;
+  DB.set('notices',(DB.get('notices')||[]).filter(n=>n.id!==id));closeModal();renderNotice();
+}
+
+// ===== 作业任务 =====
+function renderHomework(){
+  const tasks=DB.get('homeworks')||[],uid=currentUser.id;
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">📖 作业任务
+      ${isAdmin()?`<button class="btn btn-primary btn-sm" onclick="openCreateHomework()">+ 布置</button>`:''}
+    </div>
+    ${tasks.length===0?'<div class="empty"><div class="empty-icon">📖</div><p>暂无作业任务</p></div>':''}
+    ${tasks.map(t=>{
+      const done=t.submissions?.length||0,total=getMembers().length,expired=Date.now()>t.deadline,mySub=t.submissions?.find(s=>s.uid===uid);
+      return`<div class="task-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="task-name" style="flex:1">${t.name}</div>
+          <span class="badge ${expired?'badge-gray':'badge-green'}">${expired?'已截止':'进行中'}</span>
+        </div>
+        <div style="background:#f8f8f8;border-radius:6px;padding:10px;margin:8px 0;font-size:13px;color:#555;line-height:1.6">${t.content}</div>
+        <div class="task-meta"><span>截止：${fmtDate(t.deadline)}</span><span>${t.needFile?'需上传文件':'文字说明即可'}</span></div>
+        ${isAdmin()?`<div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:4px"><span>提交进度</span><span>${done}/${total}人</span></div>
+          <div class="progress"><div class="progress-bar" style="width:${total>0?Math.round(done/total*100):0}%"></div></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn btn-sm" onclick="viewHomeworkDetail('${t.id}')">查看提交</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTask('homeworks','${t.id}','renderHomework')">删除</button>
+          </div>
+        </div>`:`<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <span class="badge ${mySub?'badge-green':'badge-orange'}">${mySub?'✓ 已提交':'未提交'}</span>
+          ${!mySub&&!expired?`<button class="btn btn-primary btn-sm" onclick="submitHomework('${t.id}')">提交作业</button>`:''}
+        </div>`}
+      </div>`;}).join('')}
+  </div>`;
+}
+function openCreateHomework(){
+  const t=new Date(Date.now()+86400000).toISOString().slice(0,16);
+  showModal(`<div class="modal"><div class="modal-header"><h3>布置作业</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">作业名称 *</label><input class="form-control" id="hw-name" placeholder="如：第三章课后习题"></div>
+      <div class="form-group"><label class="form-label">作业内容 *</label><textarea class="form-control" id="hw-content" rows="4" placeholder="详细说明作业内容..."></textarea></div>
+      <div class="form-group"><label class="form-label">截止时间 *</label><input class="form-control" id="hw-deadline" type="datetime-local" value="${t}"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="hw-needfile" style="width:18px;height:18px"><label class="form-label" style="margin:0">需要上传文件/截图</label></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="createHomework()">发布</button></div>
+  </div>`);
+}
+function createHomework(){
+  const name=document.getElementById('hw-name').value.trim(),content=document.getElementById('hw-content').value.trim(),deadline=new Date(document.getElementById('hw-deadline').value).getTime(),needFile=document.getElementById('hw-needfile').checked;
+  if(!name||!content){alert('请填写作业名称和内容');return;}
+  const tasks=DB.get('homeworks')||[];tasks.unshift({id:uid(),name,content,deadline,needFile,createdAt:Date.now(),createdBy:currentUser.id,submissions:[]});
+  DB.set('homeworks',tasks);addLog('布置作业',name);closeModal();renderHomework();
+}
+function submitHomework(taskId){
+  const task=(DB.get('homeworks')||[]).find(t=>t.id===taskId);
+  showModal(`<div class="modal"><div class="modal-header"><h3>提交作业</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="alert alert-info">${task?.name}</div>
+      <div class="form-group"><label class="form-label">备注说明（可选）</label><textarea class="form-control" id="hw-note" placeholder="填写补充说明"></textarea></div>
+      ${task?.needFile?`<div class="form-group"><label class="form-label">上传文件/截图</label><input type="file" id="hw-file" accept="image/*,.pdf,.doc,.docx" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px"></div>`:'' }
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doSubmitHomework('${taskId}')">确认提交</button></div>
+  </div>`);
+}
+function doSubmitHomework(taskId){
+  const note=document.getElementById('hw-note')?.value.trim()||'',fileEl=document.getElementById('hw-file');
+  function save(fd){
+    const tasks=DB.get('homeworks')||[],task=tasks.find(t=>t.id===taskId);if(!task)return;
+    if(!task.submissions)task.submissions=[];
+    task.submissions.push({uid:currentUser.id,name:currentUser.name,time:Date.now(),note,file:fd||null});
+    DB.set('homeworks',tasks);addLog('提交作业',task.name);closeModal();renderHomework();updateNotifBadge();alert('提交成功！');
+  }
+  if(fileEl&&fileEl.files[0]){const r=new FileReader();r.onload=e=>save(e.target.result);r.readAsDataURL(fileEl.files[0]);}else save(null);
+}
+function viewHomeworkDetail(taskId){
+  const task=(DB.get('homeworks')||[]).find(t=>t.id===taskId);if(!task)return;
+  const members=getMembers(),subs=task.submissions||[],notDone=members.filter(m=>!subs.find(s=>s.uid===m.id));
+  showModal(`<div class="modal"><div class="modal-header"><h3>${task.name}</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="stat-card"><div class="stat-num" style="color:var(--green)">${subs.length}</div><div class="stat-label">已提交</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--red)">${notDone.length}</div><div class="stat-label">未提交</div></div>
+      </div>
+      ${notDone.length>0?`<div class="alert alert-error">未提交：${notDone.map(m=>m.name).join('、')}</div>`:''}
+      <div style="max-height:320px;overflow-y:auto">
+        ${subs.map(s=>`<div style="padding:10px 0;border-bottom:1px solid #f0f0f0">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:500">${s.name}</span><span style="color:#888;font-size:12px">${fmtDate(s.time)}</span></div>
+          ${s.note?`<p style="font-size:13px;color:#555">${s.note}</p>`:''}
+          ${s.file?`<img src="${s.file}" style="max-width:100%;max-height:80px;border-radius:4px;margin-top:6px;cursor:pointer" onclick="window.open(this.src)">`:''}
+        </div>`).join('')||'<p style="color:#aaa;text-align:center">暂无提交</p>'}
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">关闭</button></div>
+  </div>`);
+}
+
+// ===== 成员管理 =====
+function renderMembers(){
+  if(!isAdmin())return;
+  const members=(DB.get('users')||[]).filter(u=>u.role==='member');
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">👥 成员管理
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-primary" onclick="openAddMember()">+ 添加</button>
+        <button class="btn btn-sm" onclick="importMembers()">批量导入</button>
+      </div>
+    </div>
+    <div class="search-bar"><input class="form-control" id="member-search" placeholder="搜索姓名或学号..." oninput="filterMembers()"></div>
+    <div id="member-list">
+      ${members.map(m=>`<div class="task-card" data-name="${m.name}" data-id="${m.id}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <div>
+            <div style="font-weight:500">${m.name} <span class="badge ${m.status==='active'?'badge-green':'badge-red'}" style="margin-left:4px">${m.status==='active'?'正常':'禁用'}</span></div>
+            <div style="font-size:12px;color:#888;margin-top:2px">学号：${m.id}${m.remark?` · ${m.remark}`:''}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="editMember('${m.id}')">编辑</button>
+            <button class="btn btn-sm" onclick="resetMemberPwd('${m.id}','${m.name}')">重置密码</button>
+          </div>
+        </div>
+      </div>`).join('')}
+      ${members.length===0?'<div class="empty"><p>暂无成员，请添加</p></div>':''}
+    </div>
+    <div style="font-size:13px;color:#888;margin-top:8px">共 ${members.length} 名成员</div>
+  </div>`;
+}
+function filterMembers(){
+  const q=document.getElementById('member-search').value.toLowerCase();
+  document.querySelectorAll('#member-list .task-card[data-name]').forEach(el=>{
+    el.style.display=(el.dataset.name.toLowerCase().includes(q)||el.dataset.id.toLowerCase().includes(q))?'':'none';
+  });
+}
+function openAddMember(){
+  showModal(`<div class="modal"><div class="modal-header"><h3>添加成员</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">学号 *（唯一）</label><input class="form-control" id="add-id" placeholder="如：20230005" inputmode="numeric"></div>
+      <div class="form-group"><label class="form-label">姓名 *</label><input class="form-control" id="add-name" placeholder="请输入真实姓名"></div>
+      <div class="form-group"><label class="form-label">备注（可选）</label><input class="form-control" id="add-remark" placeholder="如：班委、学习委员"></div>
+      <div class="alert alert-info">初始密码为学号后6位，成员可自行修改</div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="addMember()">添加</button></div>
+  </div>`);
+}
+function addMember(){
+  const id=document.getElementById('add-id').value.trim(),name=document.getElementById('add-name').value.trim(),remark=document.getElementById('add-remark').value.trim();
+  if(!id||!name){alert('请填写学号和姓名');return;}
+  const users=DB.get('users')||[];if(users.find(u=>u.id===id)){alert('该学号已存在');return;}
+  users.push({id,name,role:'member',pwd:id.slice(-6),status:'active',remark});
+  DB.set('users',users);addLog('添加成员',`${name}(${id})`);closeModal();renderMembers();
+}
+function editMember(id){
+  const m=(DB.get('users')||[]).find(u=>u.id===id);if(!m)return;
+  showModal(`<div class="modal"><div class="modal-header"><h3>编辑成员</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">学号（不可修改）</label><input class="form-control" value="${m.id}" disabled style="background:#f5f5f5"></div>
+      <div class="form-group"><label class="form-label">姓名</label><input class="form-control" id="edit-name" value="${m.name}"></div>
+      <div class="form-group"><label class="form-label">备注</label><input class="form-control" id="edit-remark" value="${m.remark||''}"></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="edit-disabled" ${m.status==='disabled'?'checked':''} style="width:18px;height:18px">
+        <label class="form-label" style="margin:0;color:var(--red)">禁用此账号</label>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="saveMemberEdit('${id}')">保存</button></div>
+  </div>`);
+}
+function saveMemberEdit(id){
+  const name=document.getElementById('edit-name').value.trim(),remark=document.getElementById('edit-remark').value.trim(),disabled=document.getElementById('edit-disabled').checked;
+  if(!name){alert('姓名不能为空');return;}
+  const users=DB.get('users')||[],m=users.find(u=>u.id===id);if(!m)return;
+  m.name=name;m.remark=remark;m.status=disabled?'disabled':'active';
+  DB.set('users',users);addLog('编辑成员',`${name}(${id})`);closeModal();renderMembers();
+}
+function resetMemberPwd(id,name){
+  if(!confirm(`确认将 ${name} 的密码重置为学号后6位？`))return;
+  const users=DB.get('users')||[],m=users.find(u=>u.id===id);if(!m)return;
+  m.pwd=id.slice(-6);DB.set('users',users);addLog('重置密码',`${name}(${id})`);alert('密码已重置为学号后6位');
+}
+function importMembers(){
+  showModal(`<div class="modal"><div class="modal-header"><h3>批量导入成员</h3><button class="close-btn" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="alert alert-info">每行一条，格式：<b>学号,姓名</b>（逗号分隔）<br><br>示例：<br>20230005,陈七<br>20230006,周八</div>
+      <textarea class="form-control" id="import-data" rows="8" placeholder="20230005,陈七&#10;20230006,周八&#10;20230007,郑九"></textarea>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doImport()">导入</button></div>
+  </div>`);
+}
+function doImport(){
+  const raw=document.getElementById('import-data').value.trim();if(!raw){alert('请输入数据');return;}
+  const users=DB.get('users')||[];let added=0,skipped=0;
+  raw.split('\n').forEach(line=>{
+    const parts=line.trim().split(',');if(parts.length<2)return;
+    const [id,name,remark='']=parts.map(s=>s.trim());if(!id||!name)return;
+    if(users.find(u=>u.id===id)){skipped++;return;}
+    users.push({id,name,role:'member',pwd:id.slice(-6),status:'active',remark});added++;
+  });
+  DB.set('users',users);addLog('批量导入',`新增${added}人，跳过${skipped}人`);closeModal();renderMembers();alert(`导入完成！新增 ${added} 人，跳过 ${skipped} 人（已存在）`);
+}
+
+// ===== 数据统计 =====
+function renderStats(){
+  if(!isAdmin())return;
+  const scs=DB.get('screenshots')||[],rps=DB.get('replies')||[],hws=DB.get('homeworks')||[],leaves=DB.get('leaves')||[],members=getMembers();
+  function rate(tasks,key){if(!tasks.length||!members.length)return 0;return Math.round(tasks.reduce((s,t)=>s+(t[key]||[]).length/members.length,0)/tasks.length*100);}
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">📊 数据统计</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">${members.length}</div><div class="stat-label">班级成员</div></div>
+      <div class="stat-card"><div class="stat-num">${scs.length+rps.length+hws.length}</div><div class="stat-label">总任务数</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--green)">${rate(scs,'submissions')}%</div><div class="stat-label">截图平均完成率</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--blue)">${rate(rps,'replies')}%</div><div class="stat-label">回复平均完成率</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">👥 各成员完成情况</div>
+      <div class="table-wrap"><table>
+        <tr><th>成员</th><th>截图</th><th>回复</th><th>作业</th></tr>
+        ${members.map(m=>{
+          const a=scs.filter(t=>t.submissions?.find(s=>s.uid===m.id)).length;
+          const b=rps.filter(t=>t.replies?.find(r=>r.uid===m.id)).length;
+          const c=hws.filter(t=>t.submissions?.find(s=>s.uid===m.id)).length;
+          return`<tr><td>${m.name}</td><td>${a}/${scs.length}</td><td>${b}/${rps.length}</td><td>${c}/${hws.length}</td></tr>`;}).join('')}
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 请假统计</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num">${leaves.length}</div><div class="stat-label">总申请</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--green)">${leaves.filter(l=>l.status==='approved').length}</div><div class="stat-label">已批准</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--orange)">${leaves.filter(l=>l.status==='pending').length}</div><div class="stat-label">待审批</div></div>
+        <div class="stat-card"><div class="stat-num" style="color:var(--red)">${leaves.filter(l=>l.status==='rejected').length}</div><div class="stat-label">已驳回</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== 历史记录 =====
+function renderHistory(){
+  const logs=DB.get('logs')||[],myLogs=isAdmin()?logs:logs.filter(l=>l.user===currentUser.id);
+  document.getElementById('content').innerHTML=`<div>
+    <div class="page-header">🕐 历史记录</div>
+    ${myLogs.length===0?'<div class="empty"><div class="empty-icon">🕐</div><p>暂无记录</p></div>':
+    myLogs.slice(0,80).map(l=>`<div class="task-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div>
+          ${isAdmin()?`<div style="font-weight:500;font-size:13px">${l.userName}</div>`:''}
+          <div style="font-size:13px">${l.detail}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <span class="badge badge-blue">${l.action}</span>
+          <div style="font-size:11px;color:#aaa;margin-top:4px">${fmtDate(l.time)}</div>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ===== 个人中心 =====
+function renderProfile(){
+  document.getElementById('content').innerHTML=`<div>
+    <div style="background:#001529;border-radius:12px;padding:24px;margin-bottom:14px;display:flex;align-items:center;gap:16px">
+      <div class="avatar" style="width:56px;height:56px;font-size:20px;flex-shrink:0">${currentUser.name.slice(-1)}</div>
+      <div>
+        <div style="font-size:18px;font-weight:600;color:#fff">${currentUser.name}</div>
+        <div style="font-size:13px;color:#ffffff80;margin-top:2px">学号：${currentUser.id}</div>
+        <div style="font-size:13px;color:#40a9ff;margin-top:2px">${currentUser.role==='admin'?'管理者（班长）':'普通成员'}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 修改密码</div>
+      <div class="form-group"><label class="form-label">当前密码</label><input class="form-control" type="password" id="pwd-old" placeholder="请输入当前密码"></div>
+      <div class="form-group"><label class="form-label">新密码（至少6位）</label><input class="form-control" type="password" id="pwd-new" placeholder="请输入新密码"></div>
+      <div class="form-group"><label class="form-label">确认新密码</label><input class="form-control" type="password" id="pwd-confirm" placeholder="请再次输入新密码"></div>
+      <button class="btn btn-primary btn-block" onclick="changePwd()">确认修改密码</button>
+    </div>
+
+    ${isAdmin()?`<div class="card">
+      <div class="card-title">⚙️ 系统设置</div>
+      <div class="form-group"><label class="form-label">班级名称</label><input class="form-control" id="setting-classname" value="${DB.get('settings')?.className||''}" placeholder="如：软件工程2301班"></div>
+      <button class="btn btn-primary btn-block" onclick="saveSettings()">保存设置</button>
+    </div>`:''}
+
+    <div class="card">
+      <button class="btn btn-danger btn-block" onclick="doLogout()">退出登录</button>
+    </div>
+  </div>`;
+}
+function changePwd(){
+  const old=document.getElementById('pwd-old').value,nw=document.getElementById('pwd-new').value,conf=document.getElementById('pwd-confirm').value;
+  if(!old||!nw||!conf){alert('请填写所有密码字段');return;}
+  if(old!==currentUser.pwd){alert('当前密码错误');return;}
+  if(nw.length<6){alert('新密码至少6位');return;}
+  if(nw!==conf){alert('两次输入的密码不一致');return;}
+  const users=DB.get('users')||[],u=users.find(x=>x.id===currentUser.id);if(!u)return;
+  u.pwd=nw;currentUser.pwd=nw;DB.set('users',users);addLog('修改密码','修改个人密码');
+  alert('密码修改成功！');
+  document.getElementById('pwd-old').value='';document.getElementById('pwd-new').value='';document.getElementById('pwd-confirm').value='';
+}
+function saveSettings(){
+  const className=document.getElementById('setting-classname').value.trim();
+  DB.set('settings',{className});document.getElementById('class-name-top').textContent=className||'班级管理';
+  addLog('修改设置','班级名称：'+className);alert('设置已保存！');
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+initData();
+</script>
+</body>
+</html>
